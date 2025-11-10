@@ -27,13 +27,13 @@ public class TestController {
     }
 
     @GetMapping("/private/admin/health")
-    //@PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public Map<String, String> healthPrivateAdmin(){
         return Map.of("status", "ok", "message", "private admin endpoint");
     }
 
     @GetMapping("/private/admin/write/health")
-    //@PreAuthorize("hasAuthority('WRITE')")
+    @PreAuthorize("hasAuthority('WRITE')")
     public Map<String, String> healthAdminWrite(){
         return Map.of("status", "ok", "message", "private endpoint  write permission");
     }
