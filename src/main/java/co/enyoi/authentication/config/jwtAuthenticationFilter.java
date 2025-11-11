@@ -39,6 +39,13 @@ public class jwtAuthenticationFilter extends OncePerRequestFilter {
                                     @NonNull HttpServletResponse response,
                                     @NonNull FilterChain filterChain) throws ServletException, IOException {
 
+        // Skip JWT processing for public endpoints
+        if (isPublicEndpoint(request)) {
+            logger.debug("Skipping JWT authentication for public endpoint: {}", request.getRequestURI());
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         try {
             String jwt = extractJwtFromRequest(request);
 
@@ -53,6 +60,19 @@ public class jwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private boolean isPublicEndpoint(HttpServletRequest request) {
+        String uri = request.getRequestURI();
+
+        // List of public endpoints that don't require JWT authentication
+        return uri.equals("/api/v1/auth") ||
+               uri.startsWith("/api/v1/auth/") ||
+               uri.equals("/api/v1/refresh") ||
+               uri.startsWith("/api/v1/refresh/") ||
+               uri.startsWith("/api/v1/gateway/auth/") ||
+               uri.equals("/api/v1") ||
+               uri.startsWith("/h2-console/");
     }
 
     private String extractJwtFromRequest(HttpServletRequest request) {

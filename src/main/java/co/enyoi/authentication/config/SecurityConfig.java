@@ -44,18 +44,22 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                        .requestMatchers("/h2-console/**", "/api/v1/auth/**", "/api/v1/refresh/**", "/api/v1/gateway/auth/**").permitAll()
+                        // Public endpoints - no authentication required
+                        .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers("/api/v1/auth", "/api/v1/auth/**").permitAll()
+                        .requestMatchers("/api/v1/refresh", "/api/v1/refresh/**").permitAll()
+                        .requestMatchers("/api/v1/gateway/auth/**").permitAll()
                         .requestMatchers("/api/v1").permitAll()
+                        // Protected endpoints with specific roles/authorities
                         .requestMatchers("/api/v1/private/admin/health").hasRole("ADMIN")
                         .requestMatchers("/api/v1/private/admin/write/health").hasAuthority("WRITE")
+                        // All other requests require authentication
                         .anyRequest().authenticated())
                 .userDetailsService(jpaUserDetailsService)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .headers(headers -> headers.frameOptions().sameOrigin())
-                //.csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**"));
                 .csrf(csrf -> csrf.disable());
-
 
         return http.build();
     }
