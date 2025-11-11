@@ -1,7 +1,7 @@
 package co.enyoi.authentication.exception;
 
-import co.enyoi.authentication.dto.ErrorResponse;
-import co.enyoi.authentication.dto.ValidationErrorResponse;
+import co.enyoi.authentication.dto.*;
+import co.enyoi.authentication.util.RequestIdUtil;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.SignatureException;
@@ -32,210 +32,303 @@ public class GlobalExceptionHandler {
     // ========== Authentication & Authorization Exceptions ==========
 
     @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleUserNotFoundException(
+    public ResponseEntity<ApiErrorResponse> handleUserNotFoundException(
             UserNotFoundException ex,
             HttpServletRequest request) {
-        logger.warn("User not found: {}", ex.getMessage());
 
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.NOT_FOUND.value(),
-                "Not Found",
+        String requestId = RequestIdUtil.getRequestId(request);
+        logger.warn("[{}] User not found: {}", requestId, ex.getMessage());
+
+        ErrorDetail errorDetail = new ErrorDetail(
+                ErrorCode.USER_NOT_FOUND.getCode(),
+                ErrorCode.USER_NOT_FOUND.getMessage(),
                 ex.getMessage(),
                 request.getRequestURI()
         );
 
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+        ApiErrorResponse response = new ApiErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                errorDetail,
+                requestId
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ErrorResponse> handleBadCredentials(
+    public ResponseEntity<ApiErrorResponse> handleBadCredentials(
             BadCredentialsException ex,
             HttpServletRequest request) {
-        logger.warn("Bad credentials attempt from: {}", request.getRemoteAddr());
 
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.UNAUTHORIZED.value(),
-                "Unauthorized",
-                "Invalid username or password",
+        String requestId = RequestIdUtil.getRequestId(request);
+        logger.warn("[{}] Bad credentials attempt from: {}", requestId, request.getRemoteAddr());
+
+        ErrorDetail errorDetail = new ErrorDetail(
+                ErrorCode.INVALID_CREDENTIALS.getCode(),
+                ErrorCode.INVALID_CREDENTIALS.getMessage(),
                 request.getRequestURI()
         );
 
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+        ApiErrorResponse response = new ApiErrorResponse(
+                HttpStatus.UNAUTHORIZED.value(),
+                errorDetail,
+                requestId
+        );
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
     @ExceptionHandler(UsernameNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleUsernameNotFoundException(
+    public ResponseEntity<ApiErrorResponse> handleUsernameNotFoundException(
             UsernameNotFoundException ex,
             HttpServletRequest request) {
-        logger.warn("Username not found: {}", ex.getMessage());
 
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.UNAUTHORIZED.value(),
-                "Unauthorized",
-                "Invalid credentials",
+        String requestId = RequestIdUtil.getRequestId(request);
+        logger.warn("[{}] Username not found: {}", requestId, ex.getMessage());
+
+        ErrorDetail errorDetail = new ErrorDetail(
+                ErrorCode.INVALID_CREDENTIALS.getCode(),
+                ErrorCode.INVALID_CREDENTIALS.getMessage(),
                 request.getRequestURI()
         );
 
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+        ApiErrorResponse response = new ApiErrorResponse(
+                HttpStatus.UNAUTHORIZED.value(),
+                errorDetail,
+                requestId
+        );
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
     @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<ErrorResponse> handleAuthenticationException(
+    public ResponseEntity<ApiErrorResponse> handleAuthenticationException(
             AuthenticationException ex,
             HttpServletRequest request) {
-        logger.error("Authentication error: {}", ex.getMessage());
 
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.UNAUTHORIZED.value(),
-                "Unauthorized",
-                "Authentication failed",
-                request.getRequestURI(),
-                ex.getMessage()
+        String requestId = RequestIdUtil.getRequestId(request);
+        logger.error("[{}] Authentication error: {}", requestId, ex.getMessage());
+
+        ErrorDetail errorDetail = new ErrorDetail(
+                ErrorCode.AUTHENTICATION_FAILED.getCode(),
+                ErrorCode.AUTHENTICATION_FAILED.getMessage(),
+                ex.getMessage(),
+                request.getRequestURI()
         );
 
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+        ApiErrorResponse response = new ApiErrorResponse(
+                HttpStatus.UNAUTHORIZED.value(),
+                errorDetail,
+                requestId
+        );
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleAccessDeniedException(
+    public ResponseEntity<ApiErrorResponse> handleAccessDeniedException(
             AccessDeniedException ex,
             HttpServletRequest request) {
-        logger.warn("Access denied to: {} from user: {}", request.getRequestURI(), request.getRemoteUser());
 
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.FORBIDDEN.value(),
-                "Forbidden",
+        String requestId = RequestIdUtil.getRequestId(request);
+        logger.warn("[{}] Access denied to: {} from user: {}",
+                requestId, request.getRequestURI(), request.getRemoteUser());
+
+        ErrorDetail errorDetail = new ErrorDetail(
+                ErrorCode.ACCESS_DENIED.getCode(),
+                ErrorCode.ACCESS_DENIED.getMessage(),
                 "You don't have permission to access this resource",
                 request.getRequestURI()
         );
 
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
+        ApiErrorResponse response = new ApiErrorResponse(
+                HttpStatus.FORBIDDEN.value(),
+                errorDetail,
+                requestId
+        );
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
     }
 
     // ========== JWT Exceptions ==========
 
     @ExceptionHandler(InvalidJwtTokenException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidJwtToken(
+    public ResponseEntity<ApiErrorResponse> handleInvalidJwtToken(
             InvalidJwtTokenException ex,
             HttpServletRequest request) {
-        logger.warn("Invalid JWT token: {}", ex.getMessage());
 
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.UNAUTHORIZED.value(),
-                "Unauthorized",
-                "Invalid or malformed JWT token",
+        String requestId = RequestIdUtil.getRequestId(request);
+        logger.warn("[{}] Invalid JWT token: {}", requestId, ex.getMessage());
+
+        ErrorDetail errorDetail = new ErrorDetail(
+                ErrorCode.INVALID_TOKEN.getCode(),
+                ErrorCode.INVALID_TOKEN.getMessage(),
+                ex.getMessage(),
                 request.getRequestURI()
         );
 
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+        ApiErrorResponse response = new ApiErrorResponse(
+                HttpStatus.UNAUTHORIZED.value(),
+                errorDetail,
+                requestId
+        );
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
     @ExceptionHandler(ExpiredJwtException.class)
-    public ResponseEntity<ErrorResponse> handleExpiredJwtException(
+    public ResponseEntity<ApiErrorResponse> handleExpiredJwtException(
             ExpiredJwtException ex,
             HttpServletRequest request) {
-        logger.warn("Expired JWT token: {}", ex.getMessage());
 
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.UNAUTHORIZED.value(),
-                "Unauthorized",
-                "JWT token has expired",
+        String requestId = RequestIdUtil.getRequestId(request);
+        logger.warn("[{}] Expired JWT token", requestId);
+
+        ErrorDetail errorDetail = new ErrorDetail(
+                ErrorCode.EXPIRED_TOKEN.getCode(),
+                ErrorCode.EXPIRED_TOKEN.getMessage(),
+                "Token expired at: " + ex.getClaims().getExpiration(),
                 request.getRequestURI()
         );
 
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+        ApiErrorResponse response = new ApiErrorResponse(
+                HttpStatus.UNAUTHORIZED.value(),
+                errorDetail,
+                requestId
+        );
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
     @ExceptionHandler(MalformedJwtException.class)
-    public ResponseEntity<ErrorResponse> handleMalformedJwtException(
+    public ResponseEntity<ApiErrorResponse> handleMalformedJwtException(
             MalformedJwtException ex,
             HttpServletRequest request) {
-        logger.warn("Malformed JWT token: {}", ex.getMessage());
 
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                "Bad Request",
-                "Malformed JWT token",
+        String requestId = RequestIdUtil.getRequestId(request);
+        logger.warn("[{}] Malformed JWT token: {}", requestId, ex.getMessage());
+
+        ErrorDetail errorDetail = new ErrorDetail(
+                ErrorCode.MALFORMED_TOKEN.getCode(),
+                ErrorCode.MALFORMED_TOKEN.getMessage(),
                 request.getRequestURI()
         );
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        ApiErrorResponse response = new ApiErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                errorDetail,
+                requestId
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     @ExceptionHandler(SignatureException.class)
-    public ResponseEntity<ErrorResponse> handleSignatureException(
+    public ResponseEntity<ApiErrorResponse> handleSignatureException(
             SignatureException ex,
             HttpServletRequest request) {
-        logger.error("JWT signature validation failed: {}", ex.getMessage());
 
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.UNAUTHORIZED.value(),
-                "Unauthorized",
-                "JWT signature validation failed",
+        String requestId = RequestIdUtil.getRequestId(request);
+        logger.error("[{}] JWT signature validation failed: {}", requestId, ex.getMessage());
+
+        ErrorDetail errorDetail = new ErrorDetail(
+                ErrorCode.TOKEN_SIGNATURE_INVALID.getCode(),
+                ErrorCode.TOKEN_SIGNATURE_INVALID.getMessage(),
                 request.getRequestURI()
         );
 
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+        ApiErrorResponse response = new ApiErrorResponse(
+                HttpStatus.UNAUTHORIZED.value(),
+                errorDetail,
+                requestId
+        );
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
     // ========== Refresh Token Exceptions ==========
 
     @ExceptionHandler(RefreshTokenNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleRefreshTokenNotFound(
+    public ResponseEntity<ApiErrorResponse> handleRefreshTokenNotFound(
             RefreshTokenNotFoundException ex,
             HttpServletRequest request) {
-        logger.warn("Refresh token not found: {}", ex.getMessage());
 
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.NOT_FOUND.value(),
-                "Not Found",
-                "Refresh token not found or invalid",
+        String requestId = RequestIdUtil.getRequestId(request);
+        logger.warn("[{}] Refresh token not found: {}", requestId, ex.getMessage());
+
+        ErrorDetail errorDetail = new ErrorDetail(
+                ErrorCode.REFRESH_TOKEN_NOT_FOUND.getCode(),
+                ErrorCode.REFRESH_TOKEN_NOT_FOUND.getMessage(),
+                "The provided refresh token is invalid or does not exist",
                 request.getRequestURI()
         );
 
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
+        ApiErrorResponse response = new ApiErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                errorDetail,
+                requestId
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
     @ExceptionHandler(RefreshTokenExpiredException.class)
-    public ResponseEntity<ErrorResponse> handleRefreshTokenExpired(
+    public ResponseEntity<ApiErrorResponse> handleRefreshTokenExpired(
             RefreshTokenExpiredException ex,
             HttpServletRequest request) {
-        logger.warn("Refresh token expired: {}", ex.getMessage());
 
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.UNAUTHORIZED.value(),
-                "Unauthorized",
-                "Refresh token has expired. Please login again",
-                request.getRequestURI(),
-                "Expired at: " + ex.getExpiryDate()
+        String requestId = RequestIdUtil.getRequestId(request);
+        logger.warn("[{}] Refresh token expired: {}", requestId, ex.getMessage());
+
+        ErrorDetail errorDetail = new ErrorDetail(
+                ErrorCode.REFRESH_TOKEN_EXPIRED.getCode(),
+                ErrorCode.REFRESH_TOKEN_EXPIRED.getMessage(),
+                "Token expired at: " + ex.getExpiryDate() + ". Please login again",
+                request.getRequestURI()
         );
 
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+        ApiErrorResponse response = new ApiErrorResponse(
+                HttpStatus.UNAUTHORIZED.value(),
+                errorDetail,
+                requestId
+        );
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
     @ExceptionHandler(AuthenticationFailedException.class)
-    public ResponseEntity<ErrorResponse> handleAuthenticationFailed(
+    public ResponseEntity<ApiErrorResponse> handleAuthenticationFailed(
             AuthenticationFailedException ex,
             HttpServletRequest request) {
-        logger.error("Authentication failed: {}", ex.getMessage());
 
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.UNAUTHORIZED.value(),
-                "Unauthorized",
+        String requestId = RequestIdUtil.getRequestId(request);
+        logger.error("[{}] Authentication failed: {}", requestId, ex.getMessage());
+
+        ErrorDetail errorDetail = new ErrorDetail(
+                ErrorCode.AUTHENTICATION_FAILED.getCode(),
+                ErrorCode.AUTHENTICATION_FAILED.getMessage(),
                 ex.getMessage(),
                 request.getRequestURI()
         );
 
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+        ApiErrorResponse response = new ApiErrorResponse(
+                HttpStatus.UNAUTHORIZED.value(),
+                errorDetail,
+                requestId
+        );
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
 
     // ========== Validation Exceptions ==========
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ValidationErrorResponse> handleValidationExceptions(
+    public ResponseEntity<ApiValidationErrorResponse> handleValidationExceptions(
             MethodArgumentNotValidException ex,
             HttpServletRequest request) {
-        logger.warn("Validation error on request: {}", request.getRequestURI());
+
+        String requestId = RequestIdUtil.getRequestId(request);
+        logger.warn("[{}] Validation error on request: {}", requestId, request.getRequestURI());
 
         Map<String, List<String>> fieldErrors = new HashMap<>();
 
@@ -246,48 +339,70 @@ public class GlobalExceptionHandler {
             fieldErrors.computeIfAbsent(fieldName, k -> new ArrayList<>()).add(errorMessage);
         });
 
-        ValidationErrorResponse errorResponse = new ValidationErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                "Validation Failed",
-                "Input validation failed",
+        ValidationErrorDetail errorDetail = new ValidationErrorDetail(
+                ErrorCode.VALIDATION_FAILED.getCode(),
+                ErrorCode.VALIDATION_FAILED.getMessage(),
+                "One or more fields have validation errors",
                 request.getRequestURI(),
                 fieldErrors
         );
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        ApiValidationErrorResponse response = new ApiValidationErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                errorDetail,
+                requestId
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     // ========== Generic Exceptions ==========
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErrorResponse> handleIllegalArgument(
+    public ResponseEntity<ApiErrorResponse> handleIllegalArgument(
             IllegalArgumentException ex,
             HttpServletRequest request) {
-        logger.warn("Illegal argument: {}", ex.getMessage());
 
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                "Bad Request",
+        String requestId = RequestIdUtil.getRequestId(request);
+        logger.warn("[{}] Illegal argument: {}", requestId, ex.getMessage());
+
+        ErrorDetail errorDetail = new ErrorDetail(
+                ErrorCode.BAD_REQUEST.getCode(),
+                ErrorCode.BAD_REQUEST.getMessage(),
                 ex.getMessage(),
                 request.getRequestURI()
         );
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
+        ApiErrorResponse response = new ApiErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                errorDetail,
+                requestId
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGenericException(
+    public ResponseEntity<ApiErrorResponse> handleGenericException(
             Exception ex,
             HttpServletRequest request) {
-        logger.error("Unexpected error occurred", ex);
 
-        ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "Internal Server Error",
-                "An unexpected error occurred. Please try again later",
+        String requestId = RequestIdUtil.getRequestId(request);
+        logger.error("[{}] Unexpected error occurred", requestId, ex);
+
+        ErrorDetail errorDetail = new ErrorDetail(
+                ErrorCode.INTERNAL_SERVER_ERROR.getCode(),
+                ErrorCode.INTERNAL_SERVER_ERROR.getMessage(),
+                "An unexpected error occurred. Please try again later or contact support with request ID: " + requestId,
                 request.getRequestURI()
         );
 
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        ApiErrorResponse response = new ApiErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+                errorDetail,
+                requestId
+        );
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 }

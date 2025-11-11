@@ -1,14 +1,14 @@
 package co.enyoi.authentication.controller;
 
-import co.enyoi.authentication.dto.AuthRequest;
-import co.enyoi.authentication.dto.AuthResponse;
-import co.enyoi.authentication.dto.RefreshTokenRequest;
+import co.enyoi.authentication.dto.*;
 import co.enyoi.authentication.exception.AuthenticationFailedException;
 import co.enyoi.authentication.exception.RefreshTokenExpiredException;
 import co.enyoi.authentication.exception.RefreshTokenNotFoundException;
 import co.enyoi.authentication.model.security.RefreshToken;
 import co.enyoi.authentication.service.JwtService;
 import co.enyoi.authentication.service.RefreshTokenService;
+import co.enyoi.authentication.util.RequestIdUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,9 +42,12 @@ public class AuthController {
 
 
     @PostMapping("/auth")
-    public ResponseEntity<AuthResponse> authenticate(@Valid @RequestBody AuthRequest request) {
+    public ResponseEntity<ApiSuccessResponse<AuthResponse>> authenticate(
+            @Valid @RequestBody AuthRequest request,
+            HttpServletRequest httpRequest) {
         try {
-            logger.info("Authentication attempt for user: {}", request.username());
+            String requestId = RequestIdUtil.getRequestId(httpRequest);
+            logger.info("[{}] Authentication attempt for user: {}", requestId, request.username());
 
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.username(), request.password())
@@ -53,13 +56,19 @@ public class AuthController {
             String jwt = jwtService.generateToken(authentication);
             RefreshToken refreshToken = refreshTokenService.createRefreshToken(request.username());
 
-            AuthResponse response = new AuthResponse(
+            AuthResponse authResponse = new AuthResponse(
                     jwt,
                     refreshToken.getToken(),
                     jwtService.getExpirationTime()
             );
 
-            logger.info("Authentication successful for user: {}", request.username());
+            ApiSuccessResponse<AuthResponse> response = new ApiSuccessResponse<>(
+                    HttpStatus.OK.value(),
+                    authResponse,
+                    requestId
+            );
+
+            logger.info("[{}] Authentication successful for user: {}", requestId, request.username());
             return ResponseEntity.ok(response);
 
         } catch (AuthenticationException ex) {
@@ -69,8 +78,12 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<AuthResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
-        logger.info("Refresh token request received");
+    public ResponseEntity<ApiSuccessResponse<AuthResponse>> refreshToken(
+            @Valid @RequestBody RefreshTokenRequest request,
+            HttpServletRequest httpRequest) {
+
+        String requestId = RequestIdUtil.getRequestId(httpRequest);
+        logger.info("[{}] Refresh token request received", requestId);
 
         RefreshToken refreshToken = refreshTokenService.findByToken(request.refreshToken())
                 .orElseThrow(() -> new RefreshTokenNotFoundException(request.refreshToken()));
@@ -84,13 +97,19 @@ public class AuthController {
         String jwt = jwtService.generateToken(new
                 UsernamePasswordAuthenticationToken(refreshToken.getUser().getUsername(), null));
 
-        AuthResponse response = new AuthResponse(
+        AuthResponse authResponse = new AuthResponse(
                 jwt,
                 null,
                 jwtService.getExpirationTime()
         );
 
-        logger.info("Token refreshed successfully for user: {}", refreshToken.getUser().getUsername());
+        ApiSuccessResponse<AuthResponse> response = new ApiSuccessResponse<>(
+                HttpStatus.OK.value(),
+                authResponse,
+                requestId
+        );
+
+        logger.info("[{}] Token refreshed successfully for user: {}", requestId, refreshToken.getUser().getUsername());
         return ResponseEntity.ok(response);
     }
 }
