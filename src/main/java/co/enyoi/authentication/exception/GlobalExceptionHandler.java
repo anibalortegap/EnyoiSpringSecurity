@@ -356,6 +356,56 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
+    // ========== User Management Exceptions ==========
+
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    public ResponseEntity<ApiErrorResponse> handleUserAlreadyExists(
+            UserAlreadyExistsException ex,
+            HttpServletRequest request) {
+
+        String requestId = RequestIdUtil.getRequestId(request);
+        logger.warn("[{}] User already exists: {}", requestId, ex.getMessage());
+
+        ErrorDetail errorDetail = new ErrorDetail(
+                ErrorCode.RESOURCE_ALREADY_EXISTS.getCode(),
+                ErrorCode.RESOURCE_ALREADY_EXISTS.getMessage(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        ApiErrorResponse response = new ApiErrorResponse(
+                HttpStatus.CONFLICT.value(),
+                errorDetail,
+                requestId
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+    }
+
+    @ExceptionHandler(RoleNotFoundException.class)
+    public ResponseEntity<ApiErrorResponse> handleRoleNotFound(
+            RoleNotFoundException ex,
+            HttpServletRequest request) {
+
+        String requestId = RequestIdUtil.getRequestId(request);
+        logger.warn("[{}] Role not found: {}", requestId, ex.getMessage());
+
+        ErrorDetail errorDetail = new ErrorDetail(
+                ErrorCode.RESOURCE_NOT_FOUND.getCode(),
+                ErrorCode.RESOURCE_NOT_FOUND.getMessage(),
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        ApiErrorResponse response = new ApiErrorResponse(
+                HttpStatus.NOT_FOUND.value(),
+                errorDetail,
+                requestId
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
+
     // ========== Generic Exceptions ==========
 
     @ExceptionHandler(IllegalArgumentException.class)
