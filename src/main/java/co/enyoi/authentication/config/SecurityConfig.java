@@ -58,6 +58,7 @@ public class SecurityConfig {
                 .userDetailsService(jpaUserDetailsService)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .cors(cors -> cors.configure(http))
                 .headers(headers -> headers.frameOptions().sameOrigin())
                 .csrf(csrf -> csrf.disable());
 
