@@ -39,6 +39,13 @@ public class jwtAuthenticationFilter extends OncePerRequestFilter {
                                     @NonNull HttpServletResponse response,
                                     @NonNull FilterChain filterChain) throws ServletException, IOException {
 
+        // Skip JWT processing for CORS preflight requests
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            logger.debug("Skipping JWT authentication for CORS preflight OPTIONS request: {}", request.getRequestURI());
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         // Skip JWT processing for public endpoints
         if (isPublicEndpoint(request)) {
             logger.debug("Skipping JWT authentication for public endpoint: {}", request.getRequestURI());
